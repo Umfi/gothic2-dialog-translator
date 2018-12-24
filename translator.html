@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>G2 - Dialog Translator</title>
+  <style>
+    .disabled {
+     cursor: not-allowed;
+     opacity: 0.5;
+     color: currentColor;
+     display: inline-block;  /* For IE11/ MS Edge bug */
+     pointer-events: none;
+     text-decoration: none;
+  }
+
+  .footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 60px;
+    line-height: 60px;
+  }
+  </style>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+  <script>
+
+  function extract () {
+    var skript = $('#skript').val();
+
+    var re = /(?:(ai_output[A-Z0-9\ \(\,]+\"[A-Z0-9\_]+\"[\)\;\ ]+\/\/)|(description[\ \=]+[\"]))([A-Z0-9\ \ß\.\-\,\*\!\?äöü\(\)\+\-]*)(?:[\"\;])*/gi;
+    var match;
+    var ger_text = "";
+
+    while (match = re.exec(skript)) {
+      ger_text = ger_text + match[3] + "\n";
+    }
+
+    $("#ger").val(ger_text);
+
+    $("#linktodeepl").attr("href", "https://www.deepl.com/translator#de/en/" + encodeURI(ger_text));
+    $("#linktodeepl").removeClass("disabled btn-dark");
+    $("#linktodeepl").addClass("btn-primary");
+}
+
+function generate()
+{
+  var skript = $('#skript').val();
+
+  var ger_lines = $('#ger').val().split(/\n/);
+  var ger_texts = [];
+  for (var i=0; i < ger_lines.length; i++) {
+    // only push this line if it contains a non whitespace character.
+    if (/\S/.test(ger_lines[i])) {
+      ger_texts.push($.trim(ger_lines[i]));
+    }
+  }
+
+  var eng_uncleaned =  $('#eng').val();
+  var eng_cleaned = eng_uncleaned.replace("Translated with www.DeepL.com/Translator", "");
+  var eng_lines = eng_cleaned.split(/\n/);
+  var eng_texts = [];
+  for (var i=0; i < eng_lines.length; i++) {
+    // only push this line if it contains a non whitespace character.
+    if (/\S/.test(eng_lines[i])) {
+      eng_texts.push($.trim(eng_lines[i]));
+    }
+  }
+
+  for (var i=0; i< eng_lines.length; i++) {
+    skript = skript.replace(ger_texts[i], eng_texts[i]);
+  }
+
+  $("#final").val(skript);
+  $("#final").attr("disabled", false);
+  $("#copy").attr("disabled", false);
+}
+
+function copy() {
+  var copyText = document.getElementById("final");
+  copyText.select();
+  document.execCommand("copy");
+}
+
+$(document).ready(function(){
+
+  $("#myfile").on("change", function (changeEvent) {
+  for (var i = 0; i < changeEvent.target.files.length; ++i) {
+    (function (file) {               // Wrap current file in a closure.
+      var loader = new FileReader();
+      loader.onload = function (loadEvent) {
+        if (loadEvent.target.readyState != 2)
+          return;
+        if (loadEvent.target.error) {
+          alert("Error while reading file " + file.name + ": " + loadEvent.target.error);
+          return;
+        }
+        $("#skript").val(loadEvent.target.result);
+        extract();
+      };
+      loader.readAsText(file, 'CP1250');
+    })(changeEvent.target.files[i]);
+  }
+});
+
+
+  $('#linktodeepl').click(function(){
+     $("#eng").attr("disabled", false);
+  });
+
+  $('#eng').blur(function(){
+     generate();
+  });
+
+
+});
+</script>
+</head>
+
+<body>
+
+  <nav class="navbar navbar-light bg-light">
+    <span class="navbar-brand mb-0 h1 text-center container">G2 - Dialog Translator</span>
+  </nav>
+
+  <div class="container">
+
+    <br>
+    <div class="form-group">
+      <label for="myfile">Script</label>
+      <input type="file" class="form-control-file" id="myfile">
+      <textarea id="skript" disabled style="display: none;"></textarea>
+    </div>
+
+
+    <hr>
+
+    <div class="form-group">
+      <label for="german">German:</label>
+      <textarea class="form-control" rows="5" id="ger" disabled></textarea>
+    </div>
+
+    <div class="form-group">
+      <a id="linktodeepl" href="#" target="_blank" class="btn btn-dark disabled">Get translations</a>
+    </div>
+
+    <div class="form-group">
+      <label for="english">English:</label>
+      <textarea class="form-control" rows="5" id="eng" disabled></textarea>
+    </div>
+
+    <hr>
+
+    <div class="form-group">
+      <label for="final">Translated Script:</label>
+      <textarea class="form-control" rows="5" id="final" disabled></textarea>
+    </div>
+
+    <button id="copy" class="btn btn-primary" onclick="copy()" disabled>Copy to clipboard</button>
+
+    <br>
+  </div>
+  <footer class="footer bg-light">
+    <div class="container">
+      <span class="text-muted">by <a target="_blank" href="https://umfahrer.solutions">Umfi</a> using <a target="_blank" href="https://www.deepl.com/translator">DeepL</a>.</span>
+    </div>
+  </footer>
+</body>
+
+</html>
