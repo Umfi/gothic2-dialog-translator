@@ -2,125 +2,26 @@
 <html>
 
 <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="Translate Gothic 2 Dialogs using DeepL Translation Service">
+  <meta name="author" content="Michael Umfahrer">
+  <meta property="og:title" content="G2 - Dialog Translator">
+  <meta property="og:description" content="Translate Gothic 2 Dialogs using DeepL Translation Service">
+  <meta property="og:type" content="website">
   <title>G2 - Dialog Translator</title>
-  <style>
-    .disabled {
-     cursor: not-allowed;
-     opacity: 0.5;
-     color: currentColor;
-     display: inline-block;  /* For IE11/ MS Edge bug */
-     pointer-events: none;
-     text-decoration: none;
-  }
-
-  .footer {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: 60px;
-    line-height: 60px;
-  }
-  </style>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-  <script>
-
-  function extract () {
-    var skript = $('#skript').val();
-
-    var re = /(?:(ai_output[A-Z0-9\ \(\,]+\"[A-Z0-9\_]+\"[\)\;\ ]+\/\/)|(description[\ \=]+[\"]))([A-Z0-9\ \ß\.\-\,\*\!\?äöü\(\)\+\-]*)(?:[\"\;])*/gi;
-    var match;
-    var ger_text = "";
-
-    while (match = re.exec(skript)) {
-      ger_text = ger_text + match[3] + "\n";
-    }
-
-    $("#ger").val(ger_text);
-
-    $("#linktodeepl").attr("href", "https://www.deepl.com/translator#de/en/" + encodeURI(ger_text));
-    $("#linktodeepl").removeClass("disabled btn-dark");
-    $("#linktodeepl").addClass("btn-primary");
-}
-
-function generate()
-{
-  var skript = $('#skript').val();
-
-  var ger_lines = $('#ger').val().split(/\n/);
-  var ger_texts = [];
-  for (var i=0; i < ger_lines.length; i++) {
-    // only push this line if it contains a non whitespace character.
-    if (/\S/.test(ger_lines[i])) {
-      ger_texts.push($.trim(ger_lines[i]));
-    }
-  }
-
-  var eng_uncleaned =  $('#eng').val();
-  var eng_cleaned = eng_uncleaned.replace("Translated with www.DeepL.com/Translator", "");
-  var eng_lines = eng_cleaned.split(/\n/);
-  var eng_texts = [];
-  for (var i=0; i < eng_lines.length; i++) {
-    // only push this line if it contains a non whitespace character.
-    if (/\S/.test(eng_lines[i])) {
-      eng_texts.push($.trim(eng_lines[i]));
-    }
-  }
-
-  for (var i=0; i< eng_lines.length; i++) {
-    skript = skript.replace(ger_texts[i], eng_texts[i]);
-  }
-
-  $("#final").val(skript);
-  $("#final").attr("disabled", false);
-  $("#copy").attr("disabled", false);
-}
-
-function copy() {
-  var copyText = document.getElementById("final");
-  copyText.select();
-  document.execCommand("copy");
-}
-
-$(document).ready(function(){
-
-  $("#myfile").on("change", function (changeEvent) {
-  for (var i = 0; i < changeEvent.target.files.length; ++i) {
-    (function (file) {               // Wrap current file in a closure.
-      var loader = new FileReader();
-      loader.onload = function (loadEvent) {
-        if (loadEvent.target.readyState != 2)
-          return;
-        if (loadEvent.target.error) {
-          alert("Error while reading file " + file.name + ": " + loadEvent.target.error);
-          return;
-        }
-        $("#skript").val(loadEvent.target.result);
-        extract();
-      };
-      loader.readAsText(file, 'CP1250');
-    })(changeEvent.target.files[i]);
-  }
-});
-
-
-  $('#linktodeepl').click(function(){
-     $("#eng").attr("disabled", false);
-  });
-
-  $('#eng').blur(function(){
-     generate();
-  });
-
-
-});
-</script>
+  <link rel="stylesheet" href="assets/style.css">
 </head>
 
 <body>
 
   <nav class="navbar navbar-light bg-light">
     <span class="navbar-brand mb-0 h1 text-center container">G2 - Dialog Translator</span>
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#infoModal">
+      Info
+    </button>
   </nav>
 
   <div class="container">
@@ -141,7 +42,7 @@ $(document).ready(function(){
     </div>
 
     <div class="form-group">
-      <a id="linktodeepl" href="#" target="_blank" class="btn btn-dark disabled">Get translations</a>
+      <a id="linktodeepl" href="#" target="_blank" class="btn btn-dark disabled" data-toggle="tooltip" data-placement="top" title="Get all the translations from DeepL">Translate</a>
     </div>
 
     <div class="form-group">
@@ -156,7 +57,8 @@ $(document).ready(function(){
       <textarea class="form-control" rows="5" id="final" disabled></textarea>
     </div>
 
-    <button id="copy" class="btn btn-primary" onclick="copy()" disabled>Copy to clipboard</button>
+    <button id="copy" class="btn btn-primary" onclick="copy()" disabled data-toggle="tooltip" data-placement="top" title="Copy translated script to clipboard">Copy to clipboard</button>
+    <button id="reset" class="btn btn-secondary" onclick="reset()" data-toggle="tooltip" data-placement="top" title="Reset to initial state">Reset</button>
 
     <br>
   </div>
@@ -165,6 +67,37 @@ $(document).ready(function(){
       <span class="text-muted">by <a target="_blank" href="https://umfahrer.solutions">Umfi</a> using <a target="_blank" href="https://www.deepl.com/translator">DeepL</a>.</span>
     </div>
   </footer>
+
+  <div class="modal fade" id="infoModal" tabindex="-1" role="dialog" aria-labelledby="infoModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="infoModalLabel">Information</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <ul>
+            <li>Open your dialog script using the 'Choose File Button'. <span class="text-info">(Your skript won't be uploaded and stored on the server)</span></li>
+            <br>
+            <li>Click on the translate button. All the extracted text (AI_Output, description, Info_AddChoice) is going to be translated using the DeepL Translation Service. <span class="text-info">(Keep in mind that only 5000 chars can be translated per script, there for you maybe have to split the file.)</span></li>
+            <br>
+            <li>Copy the translated text from the DeepL site back into the 'English textarea'.</li>
+            <br>
+            <li>When you leave the 'English textarea' the translated script will be generated into the 'Translated Script textarea'.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+  <script src="assets/script.js"></script>
+
 </body>
 
 </html>
